@@ -1,12 +1,35 @@
-cmake_minimum_required(VERSION 3.10)
-project(fit4012_lab5_aes LANGUAGES CXX)
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -pedantic
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+ENCRYPT_TARGET := encrypt
+DECRYPT_TARGET := decrypt
 
-add_executable(encrypt encrypt.cpp)
-add_executable(decrypt decrypt.cpp)
+.PHONY: all clean run encrypt-sample decrypt-sample test
 
-target_compile_options(encrypt PRIVATE -Wall -Wextra -pedantic)
-target_compile_options(decrypt PRIVATE -Wall -Wextra -pedantic)
+all: $(ENCRYPT_TARGET) $(DECRYPT_TARGET)
+
+$(ENCRYPT_TARGET): encrypt.cpp structures.h
+	$(CXX) $(CXXFLAGS) encrypt.cpp -o $(ENCRYPT_TARGET)
+
+$(DECRYPT_TARGET): decrypt.cpp structures.h
+	$(CXX) $(CXXFLAGS) decrypt.cpp -o $(DECRYPT_TARGET)
+
+run: all
+	bash scripts/run_sample.sh
+
+encrypt-sample: $(ENCRYPT_TARGET)
+	printf "hello FIT4012 AES\n" | ./$(ENCRYPT_TARGET)
+
+decrypt-sample: $(DECRYPT_TARGET)
+	./$(DECRYPT_TARGET)
+
+test: all
+	bash tests/test_aes_compile.sh
+	bash tests/test_encrypt_decrypt_roundtrip.sh
+	bash tests/test_multiblock_padding.sh
+	bash tests/test_tamper_negative.sh
+	bash tests/test_wrong_key_negative.sh
+
+clean:
+	rm -f $(ENCRYPT_TARGET) $(DECRYPT_TARGET) message.aes
+	rm -rf build
